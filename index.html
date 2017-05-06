@@ -4,10 +4,10 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>ESP8266</title>
+		<title>Ruby + Docker</title>
 
 		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/black.css">
+		<link rel="stylesheet" href="css/theme/white.css">
 
 		<!-- Theme used for syntax highlighting of code -->
 		<link rel="stylesheet" href="lib/css/zenburn.css">
@@ -25,25 +25,177 @@
 		<div class="reveal">
 			<div class="slides">
 				<section>
-					<h3>Usando Micropython com ESP8266</h3>
+					<h3>Usando Docker num projeto legado Rails</h3>
 					<p>
 						<small>Anna Cruz</small>
 					</p>
 				</section>
 				<section>
-					<h3>O que é o ESP8266?</h3>
+					<section>
+						<h3>Motivações</h3>
+					</section>
+					<section>
+						<img src="images/motivacoes.png" style="border: none; box-shadow: none;"/>
+					</section>
+					<section>
+						<h3>Definição de projeto legado</h3>
+					</section>
 				</section>
 				<section>
-					<h3>O que essa plaquinha pode fazer?</h3>
+					<section>
+						<h3>Na minha máquina funciona</h3>
+					</section>
+					<section>
+						<ul>
+							<li>Desenvolvedores são preguiçosos</li>
+							<li>Ambiente de desenvolvimento != Ambiente de produção</li>
+						</ul>
+						<br/> <br/>						
+						<h3 style="color: red;" class="fragment"> Que tal aproximarmos o desenvolvimento de produção e diminuir problemas? <h3>
+					</section>
 				</section>
 				<section>
-					<h3>E o micropython nisso?</h3>
+					<section>
+						<h3>Conceitos Docker</h3>
+						<img src="images/docker_logo.png" style="border: none; box-shadow: none;" />
+						<p>
+							Dockerfile, build, containers, orquestração, etc
+						</p>
+					</section>
+					<section>
+						<h3>Docker tem diferença de VM!</h3>
+						<img src="images/vm_docker.png" style="border: none; box-shadow: none;"/>
+					</section>
+					<section>
+						<h3>Como se constrói uma imagem docker</h3>
+						<img src="images/imagem_docker.png" style="border: none; box-shadow: none;"/>
+					</section>
+					<section>
+						<h3>E o build?</h3>
+						<img src="images/processo_build.png" style="border: none; box-shadow: none;"/>
+					</section>
+					<section>
+						<h3>Essa parada de containers?</h3>
+						<img src="images/containers.png" style="border: none; box-shadow: none;"/>
+					</section>
+					<section>
+						<h3>E volumes?</h3>
+						<img src="images/volumes.png" style="border: none; box-shadow: none;"/>
+					</section>
+					<section>
+						<h3>Com o que orquestrar isso tudo?</h3>
+						<img src="images/orquestracao_compose.png" style="border: none; box-shadow: none;"/>
+					</section>
 				</section>
 				<section>
-					<h3>Juntando os dois</h3>
+					<section>
+						<h3>Como ficou o Dockerfile?</h3>
+					</section>
+					<section>
+						<p> Dockerfile da aplicação </p>	
+						<pre>
+							<code class="hljs" data-trim>
+								FROM ruby:2.3.3
+
+								RUN apt-get update -qq && \\
+								apt-get install -y apt-transport-https && \\
+								apt-get install -y -qq build-essential ruby-dev libpq-dev && \\ 
+								nodejs sendmail
+
+								COPY . /opt/app/
+								WORKDIR /opt/app/
+
+								RUN bundle install
+								CMD rails s
+								EXPOSE 3000
+							</code>
+						</pre>
+					</section>
+					<section>
+						<p> Dockerfile do servidor de emails fake </p>
+						<pre>
+							<code class="hljs" data-trim>
+								FROM ruby:2.3.3
+
+								RUN gem install mailcatcher
+
+								CMD mailcatcher --ip 0.0.0.0 --foreground
+							</code>
+						</pre>
+					</section>
 				</section>
 				<section>
-					<h3>Exemplos</h3>
+					<section>
+						<h3>E o compose?</h3>
+					</section>
+					<section>
+						<pre>
+							<code class="hljs" data-trim>
+								version: '2'
+								services:
+								web:
+									build: .
+									command:
+									rails s -p 3000 -b 0.0.0.0 -e development
+									volumes:
+									- .:/app/sealevel
+									ports:
+									- "80:3000"
+									networks:
+									- backend
+
+								mailcatcher:
+									build:
+									context: .
+									dockerfile: Dockerfile-mailcatcher
+									ports:
+									- 8080:1080
+									networks:
+									- backend
+
+								networks:
+								backend:
+									driver: bridge
+
+							</code>
+						</pre>
+					</section>
+				</section>
+				<section>
+					<h3>Tá mas sério mesmo que precisava disso?</h3>
+					<p class="fragment">
+						Precisar não precisava, mas...
+					</p>
+						<ul class="fragment">
+							<li>Ambientes parecidos</li>
+							<li>Aplicação como um pacote completo</li>
+							<li>Fácil de replicar e padronizar</li>
+						</ul>
+				</section>
+				<section>
+					<h3> Queria agradecer especialmente a:</h3>
+					<img src="images/agradecimentos.png" style="border: none; box-shadow: none;"/>
+				</section>
+				<section>
+					<h2>Obrigada!</h2>
+					<div style="display: flex; align-items: center">
+						<div style="font-size: 0.75em">
+							<p>
+								Anna Cruz
+							</p>
+							<p style="display: flex; align-items: center">
+								<img src="images/twitter_logo.png" width="30em" height="30em" style="border: none; box-shadow: none; margin: 5px"/> @yuizinha
+							</p>
+							<p style="display: flex; align-items: center">
+								<img src="images/mail_logo.png" width="30em" height="30em" style="border: none; box-shadow: none; margin: 5px"/ >anna.cruz@gmail.com
+							</p>
+							<p style="display: flex; align-items: center">
+								<img src="images/github_logo.png"width="30em" height="30em" style="border: none; box-shadow: none; margin: 5px"/> /annacruz
+						</div>
+						<div>
+							<img src="images/freddie.png" style="border: none; box-shadow: none;"/>
+						</div>
+					</div>
 				</section>
 			</div>
 		</div>
